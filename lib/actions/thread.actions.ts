@@ -33,38 +33,42 @@ export async function createThread({ text, author, community, path }: Params) {
 }
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
-  connectToDB();
-  const skipAmount = (pageNumber - 1) * pageSize;
-  const postQuery = Thread.find({ parentId: { $in: [null, undefined] } })
-    .sort({
-      createdAt: "desc",
-    })
-    .skip(skipAmount)
-    .limit(pageSize)
-    .populate({ path: "author", model: User })
-    .populate({
-      path: "children",
-      populate: {
-        path: "author",
-        model: User,
-        select: "_id name parentId image",
-      },
+  try {
+    connectToDB();
+    const skipAmount = (pageNumber - 1) * pageSize;
+    const postQuery = Thread.find({ parentId: { $in: [null, undefined] } })
+      .sort({
+        createdAt: "desc",
+      })
+      .skip(skipAmount)
+      .limit(pageSize)
+      .populate({ path: "author", model: User })
+      .populate({
+        path: "children",
+        populate: {
+          path: "author",
+          model: User,
+          select: "_id name parentId image",
+        },
+      });
+
+    const totalPostCount = await Thread.countDocuments({
+      parentId: { $in: [null, undefined] },
     });
 
-  const totalPostCount = await Thread.countDocuments({
-    parentId: { $in: [null, undefined] },
-  });
+    const posts = await postQuery.exec();
 
-  const posts = await postQuery.exec();
+    const isNext = totalPostCount > skipAmount + posts.length;
 
-  const isNext = totalPostCount > skipAmount + posts.length;
-
-  return { posts, isNext };
+    return { posts, isNext };
+  } catch (error: any) {
+    throw new Error(`Error fetching posts: ${error.message}`);
+  }
 }
 
 export async function fetchThreadById(id: string) {
-  connectToDB();
   try {
+    connectToDB();
     const thread = await Thread.findById(id)
       .populate({
         path: "author",
