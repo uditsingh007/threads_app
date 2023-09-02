@@ -25,7 +25,7 @@ const UserCard = ({ id, name, username, imgUrl, personType }: Props) => {
           <p className="text-small-medium text-gray-1">@{username}</p>
         </div>
       </div>
-      <Button>View</Button>
+      <Button className="bg-primary-500">View</Button>
     </article>
   );
 };
